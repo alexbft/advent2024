@@ -1,3 +1,6 @@
+mod solve;
+
 fn main() {
-    println!("hi day1_1!!!");
+    let raw_input = std::fs::read_to_string("./src/input.txt").unwrap();
+    println!("{}", solve::solve(raw_input));
 }
