@@ -7,12 +7,12 @@ pub fn solve(input: &str) -> usize {
         visited[0] = 1;
         for i in 0..line.len() {
             let cur = visited[i];
-            for design in designs.iter() {
+            if cur == 0 {
+                continue;
+            }
+            for design in &designs {
                 if line[i..].starts_with(design) {
-                    let new_i = i + design.len();
-                    if new_i <= visited.len() {
-                        visited[new_i] += cur;
-                    }
+                    visited[i + design.len()] += cur;
                 }
             }
         }
