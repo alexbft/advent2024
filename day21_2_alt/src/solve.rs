@@ -102,6 +102,8 @@ impl<'a> Solver<'a> {
             return cost;
         }
         let graph = if depth == 0 { self.graph0 } else { self.graph1 };
+        // All controllers start at 'A'. After each click on this controller, the parent controller
+        // returns to 'A'. So, the start position for the parent controller is 'A'.
         let start = (from, 'A');
         let mut dist = HashMap::new();
         let mut estimates = HashMap::new();
