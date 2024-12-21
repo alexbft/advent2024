@@ -102,9 +102,18 @@ impl<'a> Solver<'a> {
             return cost;
         }
         let graph = if depth == 0 { self.graph0 } else { self.graph1 };
+        // Consider a graph with vertices as (this controller position, parent controller position).
+        // We need to find the shortest path from 'from' to 'to' in this graph.
+        //
         // All controllers start at 'A'. After each click on this controller, the parent controller
-        // returns to 'A'. So, the start position for the parent controller is 'A'.
+        // returns to 'A'.
+        //
+        // So, the start position is (from, 'A').
+        //
+        // While this controller ends at 'to', the parent controller can end at any position.
+        // When calculating the final cost, we need to select the minimum cost among all possible parent controller positions.
         let start = (from, 'A');
+        // Find the shortest paths from 'start' to all other vertices using Dijkstra's algorithm.
         let mut dist = HashMap::new();
         let mut estimates = HashMap::new();
         estimates.insert(start, 0);
@@ -127,17 +136,18 @@ impl<'a> Solver<'a> {
             }
         }
         let mut min_cost = HashMap::new();
-        for (&(to, parent_to), &path_cost) in dist.iter() {
+        for (&(end, parent_end), &path_cost) in dist.iter() {
             // Cost equals to path cost + click cost.
-            // Click cost is a cost for parent controller to go from 'parent_to' to 'A' and click it.
-            let click_cost = path_cost + self.get_click_cost(parent_to, 'A', depth + 1);
-            let min_click_cost = min_cost.entry(to).or_insert(click_cost);
+            // Click cost is a cost to move parent controller from 'parent_end' to 'A' and click it.
+            let click_cost = path_cost + self.get_click_cost(parent_end, 'A', depth + 1);
+            // Find the minimum click cost among all possible parent controller positions.
+            let min_click_cost = min_cost.entry(end).or_insert(click_cost);
             if *min_click_cost > click_cost {
                 *min_click_cost = click_cost;
             }
         }
-        for (&to, &cost) in min_cost.iter() {
-            self.cache.insert((from, to, depth), cost);
+        for (&end, &cost) in min_cost.iter() {
+            self.cache.insert((from, end, depth), cost);
         }
         self.cache[&(from, to, depth)]
     }
