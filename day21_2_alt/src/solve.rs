@@ -44,7 +44,7 @@ fn solve_n(input: &str, n: usize) -> usize {
         ('>', '^', 'A'),
         ('^', '>', 'A'),
     ]);
-    
+
     let mut solver = Solver::new(&graph0, &graph1, n);
 
     let mut result = 0;
@@ -115,6 +115,8 @@ impl<'a> Solver<'a> {
                 if dist.contains_key(&(to, parent_to)) {
                     continue;
                 }
+                // To go through this edge, we need to move parent controller to 'parent_to' and click it.
+                // If there is no parent controller, the cost is 1.
                 let dist_to = cur_dist + self.get_click_cost(parent_from, parent_to, depth + 1);
                 let estimated_dist = estimates.entry((to, parent_to)).or_insert(dist_to);
                 if *estimated_dist > dist_to {
@@ -124,8 +126,8 @@ impl<'a> Solver<'a> {
         }
         let mut min_cost = HashMap::new();
         for (&(to, parent_to), &path_cost) in dist.iter() {
-            // Cost equals to path cost + click cost
-            // Click cost is a cost for parent controller to go from 'parent_to' to 'A' and click
+            // Cost equals to path cost + click cost.
+            // Click cost is a cost for parent controller to go from 'parent_to' to 'A' and click it.
             let click_cost = path_cost + self.get_click_cost(parent_to, 'A', depth + 1);
             let min_click_cost = min_cost.entry(to).or_insert(click_cost);
             if *min_click_cost > click_cost {
