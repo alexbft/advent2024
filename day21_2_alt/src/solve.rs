@@ -107,30 +107,32 @@ impl<'a> Solver<'a> {
         let mut estimates = HashMap::new();
         estimates.insert(start, 0);
         while !estimates.is_empty() {
-            let (&min_key, &min_value) = estimates.iter().min_by_key(|&(_, &cost)| cost).unwrap();
-            dist.insert(min_key, min_value);
+            let (&min_key, &cur_dist) = estimates.iter().min_by_key(|&(_, &cost)| cost).unwrap();
+            dist.insert(min_key, cur_dist);
             estimates.remove(&min_key);
             let (from, parent_from) = min_key;
-            for &(to, dir) in &graph.edges[&from] {
-                if dist.contains_key(&(to, dir)) {
+            for &(to, parent_to) in &graph.edges[&from] {
+                if dist.contains_key(&(to, parent_to)) {
                     continue;
                 }
-                let cost = min_value + self.get_click_cost(parent_from, dir, depth + 1);
-                let estimated_cost = estimates.entry((to, dir)).or_insert(cost);
-                if *estimated_cost > cost {
-                    *estimated_cost = cost;
+                let dist_to = cur_dist + self.get_click_cost(parent_from, parent_to, depth + 1);
+                let estimated_dist = estimates.entry((to, parent_to)).or_insert(dist_to);
+                if *estimated_dist > dist_to {
+                    *estimated_dist = dist_to;
                 }
             }
         }
-        let mut dist_result = HashMap::new();
-        for (&(to, parent), &cost) in dist.iter() {
-            let click_cost = cost + self.get_click_cost(parent, 'A', depth + 1);
-            let result = dist_result.entry(to).or_insert(click_cost);
-            if *result > click_cost {
-                *result = click_cost;
+        let mut min_cost = HashMap::new();
+        for (&(to, parent_to), &path_cost) in dist.iter() {
+            // Cost equals to path cost + click cost
+            // Click cost is a cost for parent controller to go from 'parent_to' to 'A' and click
+            let click_cost = path_cost + self.get_click_cost(parent_to, 'A', depth + 1);
+            let min_click_cost = min_cost.entry(to).or_insert(click_cost);
+            if *min_click_cost > click_cost {
+                *min_click_cost = click_cost;
             }
         }
-        for (&to, &cost) in dist_result.iter() {
+        for (&to, &cost) in min_cost.iter() {
             self.cache.insert((from, to, depth), cost);
         }
         self.cache[&(from, to, depth)]
